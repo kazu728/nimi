@@ -44,7 +44,7 @@ fn fn_apply(chars: &mut Chars, vec: &mut Vec<String>) -> i32 {
         match nextchar {
             '(' => (),
             ')' => break,
-            'A'..='Z' => fn_apply(chars, vec)
+            'f' if chars.next().unwrap() == 'n' => fn_apply(chars, vec)
                 .to_string()
                 .chars()
                 .for_each(|c: char| buffer.push(c)),
@@ -76,7 +76,7 @@ fn eval(chars: &mut Chars, arg: i32, vec: &mut Vec<String>) -> i32 {
         return arg;
     }
 
-    if ('A'..='Z').contains(&c) {
+    if c == 'f' && chars.next().unwrap() == 'n' {
         match chars.next().unwrap() {
             '[' => fn_define(chars, vec),
             '(' => return fn_apply(chars, vec),
@@ -133,18 +133,28 @@ mod tests {
     }
     #[test]
     fn function() {
-        assert_eq!(eval(&mut "F[+ . .] F(1)".chars(), 0, &mut gen_vec()), 2);
-        assert_eq!(eval(&mut "F[+ . .] F(10)".chars(), 0, &mut gen_vec()), 20);
-        assert_eq!(eval(&mut "F[+ . 2] F(5)".chars(), 0, &mut gen_vec()), 7);
-        assert_eq!(eval(&mut "F[* . 2] F(5)".chars(), 0, &mut gen_vec()), 10);
-        assert_eq!(eval(&mut "F[* . .] F(10)".chars(), 0, &mut gen_vec()), 100);
-        assert_eq!(eval(&mut "F[* . .] F(F(2))".chars(), 0, &mut gen_vec()), 16);
+        assert_eq!(eval(&mut "fn[+ . .] fn(1)".chars(), 0, &mut gen_vec()), 2);
+        assert_eq!(eval(&mut "fn[+ . .] fn(10)".chars(), 0, &mut gen_vec()), 20);
+        assert_eq!(eval(&mut "fn[+ . 2] fn(5)".chars(), 0, &mut gen_vec()), 7);
+        assert_eq!(eval(&mut "fn[* . 2] fn(5)".chars(), 0, &mut gen_vec()), 10);
         assert_eq!(
-            eval(&mut "F[* . .] F(F(F(2)))".chars(), 0, &mut gen_vec()),
+            eval(&mut "fn[* . .] fn(10)".chars(), 0, &mut gen_vec()),
+            100
+        );
+        assert_eq!(
+            eval(&mut "fn[* . .] fn(fn(2))".chars(), 0, &mut gen_vec()),
+            16
+        );
+        assert_eq!(
+            eval(&mut "fn[* . .] fn(fn(fn(2)))".chars(), 0, &mut gen_vec()),
             256
         );
         assert_eq!(
-            eval(&mut "F[* . .] F(F(F(F(2))))".chars(), 0, &mut gen_vec()),
+            eval(
+                &mut "fn[* . .] fn(fn(fn(fn(2))))".chars(),
+                0,
+                &mut gen_vec()
+            ),
             65536
         );
     }
