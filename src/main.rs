@@ -3,15 +3,17 @@ use std::str::Chars;
 
 // e.g. "0x20a" -> 'a'
 fn extract_next_char(chars: &mut Chars) -> char {
-    let c = chars.next().unwrap();
-    if c.is_whitespace() {
-        return extract_next_char(chars);
+    while let Some(c) = chars.next() {
+        if !c.is_whitespace() {
+            return c;
+        }
     }
-    c
+
+    panic!("No more chars left");
 }
 
 // e.g. ['1', '0', '0'] -> 100
-fn conver_to_numeric(c: char, chars: &mut Chars) -> i32 {
+fn convert_to_numeric(c: char, chars: &mut Chars) -> i32 {
     let unhandling_to_i32 = |c: char| c.to_digit(10).unwrap() as i32;
     let mut val = unhandling_to_i32(c);
 
@@ -29,11 +31,11 @@ fn conver_to_numeric(c: char, chars: &mut Chars) -> i32 {
 
 fn eval_string(buffer: String, vec: &mut Vec<String>) -> i32 {
     let chars = &mut buffer.chars();
-    let number = conver_to_numeric(chars.next().unwrap(), chars);
+    let number = convert_to_numeric(chars.next().unwrap(), chars);
 
-    let expression = vec.get(0).unwrap();
+    let expression = vec.get(0).unwrap().clone();
 
-    eval(&mut expression.chars(), number, &mut vec.clone())
+    eval(&mut expression.chars(), number, vec)
 }
 
 fn fn_apply(chars: &mut Chars, vec: &mut Vec<String>) -> i32 {
@@ -44,10 +46,10 @@ fn fn_apply(chars: &mut Chars, vec: &mut Vec<String>) -> i32 {
         match nextchar {
             '(' => (),
             ')' => break,
-            'f' if chars.next().unwrap() == 'n' => fn_apply(chars, vec)
-                .to_string()
-                .chars()
-                .for_each(|c: char| buffer.push(c)),
+            'f' if chars.next().unwrap() == 'n' => {
+                let ret = fn_apply(chars, vec);
+                buffer.push_str(&ret.to_string());
+            }
             _ => buffer.push(nextchar),
         }
     }
@@ -56,7 +58,7 @@ fn fn_apply(chars: &mut Chars, vec: &mut Vec<String>) -> i32 {
 }
 
 fn fn_define(chars: &mut Chars, vec: &mut Vec<String>) {
-    let mut buffer: String = "".to_string();
+    let mut buffer = "".to_string();
 
     loop {
         let c = chars.next().unwrap();
@@ -84,7 +86,7 @@ fn eval(chars: &mut Chars, arg: i32, vec: &mut Vec<String>) -> i32 {
         }
     }
     if c.is_digit(10) {
-        return conver_to_numeric(c, chars);
+        return convert_to_numeric(c, chars);
     }
 
     if c == '+' || c == '-' || c == '*' || c == '/' {
